@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Site Limiter",
+  "version": "1.0",
+  "description": "命を削ってコードを書くための、Twitter封印ツール",
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.x.com/*"
+      ],
+      "js": ["content.js"]
+    }
+  ]
+}
