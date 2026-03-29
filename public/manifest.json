@@ -7,7 +7,7 @@
   "options_page": "index.html",
   "content_scripts": [
     {
-      "matches": ["*://*.x.com/*"],
+      "matches": ["<all_urls>"], 
       "js": ["content.js"]
     }
   ]
