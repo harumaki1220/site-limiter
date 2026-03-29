@@ -38,6 +38,15 @@ function App() {
     });
   }
 
+  // 指定したURLを封印リストから削除する処理
+  const handleDelete = (urlToDelete: string) => {
+    const newUrls = urls.filter(url => url !== urlToDelete);
+    
+    chrome.storage.sync.set({ blockedUrls: newUrls }, () => {
+      setUrls(newUrls);
+    });
+  }
+
   return (
     <div className="p-5 font-sans w-80 min-h-[300px] bg-gray-50">
       <h2 className="text-xl font-bold mb-4 text-red-600 border-b-2 border-red-200 pb-2">
@@ -66,8 +75,14 @@ function App() {
           <p className="text-sm text-gray-500 italic">まだ封印されたサイトはありません。</p>
         ) : (
           urls.map((url, index) => (
-            <li key={index} className="bg-white p-2 rounded shadow-sm text-gray-700 text-sm border-l-4 border-red-500 break-all">
-              {url}
+            <li key={index} className="flex justify-between items-center bg-white p-2 rounded shadow-sm text-gray-700 text-sm border-l-4 border-red-500 break-all">
+              <span>{url}</span>
+              <button
+                onClick={() => handleDelete(url)}
+                className="ml-3 bg-gray-200 hover:bg-red-100 text-gray-600 hover:text-red-600 px-2 py-1 rounded text-xs transition whitespace-nowrap"
+              >
+                削除
+              </button>
             </li>
           ))
         )}
