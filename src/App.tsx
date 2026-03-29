@@ -15,9 +15,21 @@ function App() {
 
   // 封印するボタンを押したときの保存処理
   const handleSave = () => {
-    if (!inputUrl.trim()) return;
+    const targetUrl = inputUrl.trim();
+    if (!targetUrl) return;
 
-    const newUrls = [...urls, inputUrl.trim()];
+    // ブラウザのシステム画面を弾く
+    if (targetUrl.startsWith('chrome://') || targetUrl.startsWith('chrome-extension://')) {
+      alert('弾けません！設定画面が開けなくなります。');
+      return;
+    }
+
+    if (urls.includes(targetUrl)) {
+      alert('そのサイトはすでに封印されています。');
+      return;
+    }
+
+    const newUrls = [...urls, targetUrl];
     
     // Chromeのストレージに保存
     chrome.storage.sync.set({ blockedUrls: newUrls }, () => {
