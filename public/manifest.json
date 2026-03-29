@@ -3,11 +3,11 @@
   "name": "Site Limiter",
   "version": "1.0",
   "description": "命を削ってコードを書くための、Twitter封印ツール",
+  "permissions": ["storage"],
+  "options_page": "index.html",
   "content_scripts": [
     {
-      "matches": [
-        "*://*.x.com/*"
-      ],
+      "matches": ["*://*.x.com/*"],
       "js": ["content.js"]
     }
   ]
