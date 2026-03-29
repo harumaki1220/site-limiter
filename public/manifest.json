@@ -2,12 +2,25 @@
   "manifest_version": 3,
   "name": "Site Limiter",
   "version": "1.0",
-  "description": "命を削ってコードを書くための、Twitter封印ツール",
+  "description": "命を削ってコードを書くための、任意のWebサイト封印ツール",
   "permissions": ["storage"],
   "options_page": "index.html",
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icon.png",
+      "48": "icon.png",
+      "128": "icon.png"
+    },
+    "default_title": "Site Limiter"
+  },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"], 
+      "matches": ["<all_urls>"],
       "js": ["content.js"]
     }
   ]
