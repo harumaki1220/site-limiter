@@ -1,0 +1,1 @@
+REG ADD "HKCU\Software\Google\Chrome\NativeMessagingHosts\com.site_limiter.vsc_watcher" /ve /t REG_SZ /d "%~dp0host_manifest.json" /f

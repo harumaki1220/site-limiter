@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Rust (vsc-watcher)
+vsc-watcher/target/
+**/*.rs.bk

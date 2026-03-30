@@ -1,0 +1,9 @@
+{
+  "name": "com.site_limiter.vsc_watcher",
+  "description": "VS Code Watcher for Site Limiter",
+  "path": "target\\x86_64-pc-windows-gnu\\debug\\vsc-watcher.exe",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://kemdgainljcmdheiolcomndlmlbfjpoc/"
+  ]
+}

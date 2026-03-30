@@ -47,11 +47,38 @@ function App() {
     });
   }
 
+  // Rustアプリとの通信テスト
+  const handlePingRust = () => {
+    const hostName = "com.site_limiter.vsc_watcher";
+    
+    chrome.runtime.sendNativeMessage(
+      hostName,
+      { text: "Reactからの通信テスト" },
+      (response) => {
+        if (chrome.runtime.lastError) {
+          console.error("通信エラー:", chrome.runtime.lastError.message);
+          alert("通信失敗...\n" + chrome.runtime.lastError.message);
+        } else {
+          console.log("Rustからの返事:", response);
+          alert("開通成功!\nRustからの返事: " + JSON.stringify(response, null, 2));
+        }
+      }
+    );
+  };
+
   return (
     <div className="p-5 font-sans w-80 min-h-[300px] bg-gray-50">
       <h2 className="text-xl font-bold mb-4 text-red-600 border-b-2 border-red-200 pb-2">
         命を削る設定画面
       </h2>
+      <div className="mb-4">
+        <button
+          onClick={handlePingRust}
+          className="bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 transition font-bold text-sm shadow w-full"
+        >
+          Rustとの通信テストを実行
+        </button>
+      </div>
       
       <div className="flex gap-2 mb-6">
         <input
