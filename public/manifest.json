@@ -4,6 +4,9 @@
   "version": "1.0",
   "description": "命を削ってコードを書くための、任意のWebサイト封印ツール",
   "permissions": ["storage", "nativeMessaging"],
+  "background": {
+    "service_worker": "background.js"
+  },
   "options_page": "index.html",
   "icons": {
     "16": "icon.png",
