@@ -3,7 +3,7 @@
   "name": "Site Limiter",
   "version": "1.0",
   "description": "命を削ってコードを書くための、任意のWebサイト封印ツール",
-  "permissions": ["storage", "nativeMessaging"],
+  "permissions": ["storage", "nativeMessaging", "tabs"],
   "background": {
     "service_worker": "background.js"
   },
