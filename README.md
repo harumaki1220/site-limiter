@@ -1,73 +1,59 @@
-# React + TypeScript + Vite
+# 命を削るサイトブロッカー (Site Limiter)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+VSCodeが開かれている間だけ、指定したWebサイト（XやYouTube Shortsなど）へのアクセスを遮断し、命を削って開発や学習に没頭するためのChrome拡張機能です。
 
-Currently, two official plugins are available:
+## 特徴
+- **VS Code監視連動**: OSのプロセスを監視し、`code.exe` が起動している時のみブロックが発動。閉じた瞬間、平和なブラウジングに戻ります。
+- **SPA（Single Page Application）対応**: YouTubeなどのページ遷移（リロードなしのURL変更）もBackground Service Workerが完全に捕捉し、逃げ道を塞ぎます。
+- **パスベースの厳密な判定**: `youtube.com/shorts` のように、特定のディレクトリのみを狙撃可能。有益なチュートリアル動画（`youtube.com/watch`）の学習は妨げません。
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 技術スタック
+- **Frontend**: React, TypeScript, Vite, Tailwind CSS
+- **Backend (Native Host)**: Rust (`sysinfo` クレートによるプロセス監視)
+- **Bridge**: Chrome Native Messaging API
 
-## React Compiler
+## 動作環境
+- Windows 11
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## セットアップ手順
 
-## Expanding the ESLint configuration
+### 1. フロントエンドのビルド (WSL側)
+```bash
+# パッケージのインストール
+pnpm install
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Chrome拡張機能として dist/ にビルド
+pnpm run build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. Rust監視ホストのクロスコンパイル (WSL側)
+Windows側のChromeから呼び出されるため、WSL内でWindows用の .exe を錬成します。
+```bash
+cd vsc-watcher
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+# Windows向けビルドターゲットとC言語リンカ(MinGW)の準備
+rustup target add x86_64-pc-windows-gnu
+sudo apt update && sudo apt install mingw-w64
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# ビルド実行（target/x86_64-pc-windows-gnu/debug/vsc-watcher.exe が生成される）
+cargo build --target x86_64-pc-windows-gnu
 ```
+
+### 3. レジストリへの住民票登録 (Windows側)
+ChromeにRustアプリの存在を教えるため、Windowsのレジストリに書き込みます。
+
+※**この作業は必ずWindows側から実行してください。**
+
+1. WSLのターミナルで `explorer.exe .` を実行し、Windowsのエクスプローラーを開く。
+2. `vsc-watcher` フォルダの中にある `install.bat` をダブルクリックして実行。
+3. 一瞬黒い画面が出て消えれば登録完了。
+
+### 4. Chromeへのインストール
+1. Chromeで [chrome://extensions/](chrome://extensions) を開く。
+2. 右上の「デベロッパー モード」をONにする。
+3. 「パッケージ化されていない拡張機能を読み込む」をクリックし、このプロジェクトの dist フォルダを選択。
+
+## 使い方
+1. インストール直後はデフォルトで x.com と youtube.com/shorts が封印リストに入ります。
+2. 拡張機能のアイコンをクリックし、オプション画面から自由に封印したいURLを追加・削除できます。
+3. VS Codeを立ち上げ、対象サイトにアクセスして画面が黒に染まれば成功です。命を削ってコードを書いてください。
