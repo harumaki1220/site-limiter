@@ -39,6 +39,17 @@ sudo apt update && sudo apt install mingw-w64
 cargo build --target x86_64-pc-windows-gnu
 ```
 
+### 拡張機能IDの設定 (重要)
+Native Messagingを動作させるには、ブラウザが発行する一意の「拡張機能ID」を許可リストに登録する必要があります。
+
+1. Chromeで chrome://extensions/ を開き、本拡張機能の「ID」をコピーします（例: kemdgainlj...）。
+2. vsc-watcher/host_manifest.json を開き、allowed_origins の中のIDを、自分のIDに書き換えて保存します。
+```json
+"allowed_origins": [
+  "chrome-extension://ここにコピーしたID/"
+]
+```
+
 ### 3. レジストリへの住民票登録 (Windows側)
 ChromeにRustアプリの存在を教えるため、Windowsのレジストリに書き込みます。
 
