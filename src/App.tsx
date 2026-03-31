@@ -10,112 +10,120 @@ function App() {
       if (Array.isArray(result.blockedUrls)) {
         setUrls(result.blockedUrls)
       }
-    })
+    });
   }, [])
 
-  // 封印するボタンを押したときの保存処理
+  // 保存処理
   const handleSave = () => {
     const targetUrl = inputUrl.trim();
     if (!targetUrl) return;
 
-    // ブラウザのシステム画面を弾く
     if (targetUrl.startsWith('chrome://') || targetUrl.startsWith('chrome-extension://')) {
-      alert('弾けません！設定画面が開けなくなります。');
+      alert('システム画面は封印できません。');
       return;
     }
 
     if (urls.includes(targetUrl)) {
-      alert('そのサイトはすでに封印されています。');
+      alert('すでに封印されています。');
       return;
     }
 
     const newUrls = [...urls, targetUrl];
-    
-    // Chromeのストレージに保存
     chrome.storage.sync.set({ blockedUrls: newUrls }, () => {
       setUrls(newUrls);
       setInputUrl('');
     });
   }
 
-  // 指定したURLを封印リストから削除する処理
+  // 削除処理
   const handleDelete = (urlToDelete: string) => {
     const newUrls = urls.filter(url => url !== urlToDelete);
-    
     chrome.storage.sync.set({ blockedUrls: newUrls }, () => {
       setUrls(newUrls);
     });
   }
 
-  // Rustアプリとの通信テスト
+  // Rust通信テスト
   const handlePingRust = () => {
     const hostName = "com.site_limiter.vsc_watcher";
-    
     chrome.runtime.sendNativeMessage(
       hostName,
-      { text: "Reactからの通信テスト" },
+      { text: "Ping from Dark Mode UI" },
       (response) => {
         if (chrome.runtime.lastError) {
-          console.error("通信エラー:", chrome.runtime.lastError.message);
-          alert("通信失敗...\n" + chrome.runtime.lastError.message);
+          alert("通信失敗: " + chrome.runtime.lastError.message);
         } else {
-          console.log("Rustからの返事:", response);
-          alert("開通成功!\nRustからの返事: " + JSON.stringify(response, null, 2));
+          alert("開通成功!\n" + JSON.stringify(response, null, 2));
         }
       }
     );
   };
 
-  return (
-    <div className="p-5 font-sans w-80 min-h-[300px] bg-gray-50">
-      <h2 className="text-xl font-bold mb-4 text-red-600 border-b-2 border-red-200 pb-2">
-        命を削る設定画面
-      </h2>
-      <div className="mb-4">
-        <button
-          onClick={handlePingRust}
-          className="bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 transition font-bold text-sm shadow w-full"
-        >
-          Rustとの通信テストを実行
-        </button>
-      </div>
+return (
+  // 外側
+  <div className="min-h-screen bg-[#1e1e1e] p-4 sm:p-8 font-sans text-[#cccccc] w-full">
+    
+    {/* 内側のカード */}
+    <div className="max-w-2xl mx-auto bg-[#252526] rounded-lg shadow-2xl border border-[#333333] overflow-hidden">
       
-      <div className="flex gap-2 mb-6">
-        <input
-          type="text"
-          value={inputUrl}
-          onChange={(e) => setInputUrl(e.target.value)}
-          placeholder="例: youtube.com"
-          className="flex-1 p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
-        />
-        <button
-          onClick={handleSave}
-          className="bg-red-600 text-white px-3 py-2 rounded hover:bg-red-700 transition font-bold text-sm shadow"
-        >
-          封印
-        </button>
+      {/* ヘッダー */}
+      <div className="bg-[#323233] px-6 py-4 border-b border-[#333333]">
+        <h1 className="text-xl font-bold text-[#e1e1e1] flex items-center gap-2">
+          Site Limiter
+        </h1>
       </div>
 
-      <h3 className="text-md font-bold mb-3 text-gray-700">封印中のサイト</h3>
-      <ul className="space-y-2">
-        {urls.length === 0 ? (
-          <p className="text-sm text-gray-500 italic">まだ封印されたサイトはありません。</p>
-        ) : (
-          urls.map((url, index) => (
-            <li key={index} className="flex justify-between items-center bg-white p-2 rounded shadow-sm text-gray-700 text-sm border-l-4 border-red-500 break-all">
-              <span>{url}</span>
-              <button
-                onClick={() => handleDelete(url)}
-                className="ml-3 bg-gray-200 hover:bg-red-100 text-gray-600 hover:text-red-600 px-2 py-1 rounded text-xs transition whitespace-nowrap"
-              >
-                削除
-              </button>
-            </li>
-          ))
-        )}
-      </ul>
+        <div className="p-5 space-y-5">
+          {/* 通信テストボタン */}
+          <button
+            onClick={handlePingRust}
+            className="w-full bg-[#0e639c] hover:bg-[#1177bb] text-white py-2 px-4 rounded text-xs font-medium transition-colors shadow-sm"
+          >
+            Rust 接続テストを実行
+          </button>
+
+          {/* 入力エリア */}
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={inputUrl}
+              onChange={(e) => setInputUrl(e.target.value)}
+              placeholder="例: youtube.com/shorts"
+              className="flex-1 bg-[#3c3c3c] border border-[#333333] text-[#cccccc] px-3 py-2 rounded text-xs focus:outline-none focus:border-[#007acc] placeholder-[#707070]"
+            />
+            <button
+              onClick={handleSave}
+              className="bg-[#0e639c] hover:bg-[#1177bb] text-white px-4 py-2 rounded text-xs transition-colors"
+            >
+              追加
+            </button>
+          </div>
+
+          {/* 封印リスト */}
+          <div>
+            <h3 className="text-[11px] font-bold text-[#858585] uppercase mb-3 tracking-widest">封印中のサイト</h3>
+            <div className="space-y-1 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
+              {urls.length === 0 ? (
+                <p className="text-[11px] text-[#707070] italic">リストは空です</p>
+              ) : (
+                urls.map((url) => (
+                  <div key={url} className="flex justify-between items-center bg-[#2d2d2d] p-2 rounded border border-[#333333] group hover:bg-[#37373d] transition-colors">
+                    <span className="text-xs font-mono text-[#dcdcaa] truncate mr-2">{url}</span>
+                    <button
+                      onClick={() => handleDelete(url)}
+                      className="text-[#858585] hover:text-[#f48771] text-[10px] font-bold px-1 transition-colors"
+                    >
+                      削除
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
