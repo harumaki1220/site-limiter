@@ -1,12 +1,32 @@
 const POLLING_INTERVAL = 10000; 
 
+function updateActivityLog(isRunning) {
+  const today = new Date().toLocaleDateString('sv-SE'); // YYYY-MM-DD 形式
+
+  chrome.storage.local.get(['activityLog'], (result) => {
+    let log = result.activityLog || {};
+    if (!log[today]) {
+      log[today] = { focusMinutes: 0, blockCount: 0 };
+    }
+
+    if (isRunning) {
+      // 分単位で加算
+      log[today].focusMinutes += (POLLING_INTERVAL / 60000);
+    }
+
+    chrome.storage.local.set({ activityLog: log });
+  });
+}
+
 function checkVscAndCleanTabs() {
   const hostName = "com.site_limiter.vsc_watcher";
 
   chrome.runtime.sendNativeMessage(hostName, { text: "polling" }, (response) => {
-    if (chrome.runtime.lastError || !response || !response.vsc_running) {
-      return;
-    }
+    const isRunning = !chrome.runtime.lastError && response && response.vsc_running;
+
+    updateActivityLog(isRunning);
+
+    if (!isRunning) return;
 
     chrome.tabs.query({}, (tabs) => {
       chrome.storage.sync.get(['blockedUrls'], (result) => {
@@ -28,8 +48,7 @@ function checkVscAndCleanTabs() {
           });
 
           if (isBlocked) {
-            chrome.tabs.sendMessage(tab.id, { action: "url_changed" }).catch(() => {
-            });
+            chrome.tabs.sendMessage(tab.id, { action: "url_changed" }).catch(() => {});
           }
         });
       });

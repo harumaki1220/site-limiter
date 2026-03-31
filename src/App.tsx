@@ -1,17 +1,51 @@
 import { useState, useEffect } from 'react'
 
 function App() {
+  const [activeTab, setActiveTab] = useState<'stats' | 'settings'>('stats')
   const [urls, setUrls] = useState<string[]>([])
   const [inputUrl, setInputUrl] = useState('')
+  const [todayStats, setTodayStats] = useState({ focusMinutes: 0 })
 
-  // 画面が開かれたときに、保存済みのURLを読み込む
+  const today = new Date().toLocaleDateString('sv-SE');
+
+  // 画面が開かれたときに、保存済みのURLと統計を読み込む
   useEffect(() => {
     chrome.storage.sync.get(['blockedUrls'], (result) => {
       if (Array.isArray(result.blockedUrls)) {
         setUrls(result.blockedUrls)
       }
     });
-  }, [])
+
+    chrome.storage.local.get(['activityLog'], (result) => {
+      const log = (result.activityLog || {}) as Record<string, { focusMinutes: number }>;
+      
+      if (log[today]) {
+        setTodayStats(log[today]);
+      }
+    });
+  }, [today]);
+
+  const formatTime = (totalMinutes: number) => {
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = Math.floor(totalMinutes % 60);
+    
+    if (hours > 0) {
+      return (
+        <span>
+          <span className="text-4xl text-blue-400">{hours}</span>
+          <span className="text-sm text-[#858585] mx-1">h</span>
+          <span className="text-4xl text-blue-400">{mins}</span>
+          <span className="text-sm text-[#858585] ml-1">m</span>
+        </span>
+      );
+    }
+    return (
+      <span>
+        <span className="text-5xl text-blue-400">{mins}</span>
+        <span className="text-lg text-[#858585] ml-2">min</span>
+      </span>
+    );
+  };
 
   // 保存処理
   const handleSave = () => {
@@ -48,7 +82,7 @@ function App() {
     const hostName = "com.site_limiter.vsc_watcher";
     chrome.runtime.sendNativeMessage(
       hostName,
-      { text: "Ping from Dark Mode UI" },
+      { text: "Ping from UI" },
       (response) => {
         if (chrome.runtime.lastError) {
           alert("通信失敗: " + chrome.runtime.lastError.message);
@@ -59,67 +93,105 @@ function App() {
     );
   };
 
-return (
-  // 外側
-  <div className="min-h-screen bg-[#1e1e1e] p-4 sm:p-8 font-sans text-[#cccccc] w-full">
-    
-    {/* 内側のカード */}
-    <div className="max-w-2xl mx-auto bg-[#252526] rounded-lg shadow-2xl border border-[#333333] overflow-hidden">
-      
-      {/* ヘッダー */}
-      <div className="bg-[#323233] px-6 py-4 border-b border-[#333333]">
-        <h1 className="text-xl font-bold text-[#e1e1e1] flex items-center gap-2">
-          Site Limiter
-        </h1>
-      </div>
+  return (
+    <div className="min-h-screen bg-[#1e1e1e] p-4 sm:p-8 font-sans text-[#cccccc] w-full">
+      <div className="max-w-2xl mx-auto bg-[#252526] rounded-lg shadow-2xl border border-[#333333] overflow-hidden">
+        
+        {/* ヘッダー */}
+        <div className="bg-[#323233] px-6 py-4 border-b border-[#333333] flex justify-between items-center">
+          <h1 className="text-xl font-bold text-[#e1e1e1] flex items-center gap-2">
+            Site Limiter
+          </h1>
+          <span className="text-[10px] text-[#858585] uppercase tracking-widest bg-[#1e1e1e] px-2 py-1 rounded border border-[#333333]">
+            Active
+          </span>
+        </div>
 
-        <div className="p-5 space-y-5">
-          {/* 通信テストボタン */}
+        {/* タブナビゲーション */}
+        <div className="flex border-b border-[#333333] bg-[#252526]">
           <button
-            onClick={handlePingRust}
-            className="w-full bg-[#0e639c] hover:bg-[#1177bb] text-white py-2 px-4 rounded text-xs font-medium transition-colors shadow-sm"
+            onClick={() => setActiveTab('stats')}
+            className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest transition-colors ${
+              activeTab === 'stats' 
+                ? 'text-[#e1e1e1] border-b-2 border-blue-500 bg-[#2d2d2d]' 
+                : 'text-[#858585] hover:text-[#cccccc] hover:bg-[#2a2a2d]'
+            }`}
           >
-            Rust 接続テストを実行
+            ダッシュボード
           </button>
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest transition-colors ${
+              activeTab === 'settings' 
+                ? 'text-[#e1e1e1] border-b-2 border-blue-500 bg-[#2d2d2d]' 
+                : 'text-[#858585] hover:text-[#cccccc] hover:bg-[#2a2a2d]'
+            }`}
+          >
+            設定
+          </button>
+        </div>
 
-          {/* 入力エリア */}
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={inputUrl}
-              onChange={(e) => setInputUrl(e.target.value)}
-              placeholder="例: youtube.com/shorts"
-              className="flex-1 bg-[#3c3c3c] border border-[#333333] text-[#cccccc] px-3 py-2 rounded text-xs focus:outline-none focus:border-[#007acc] placeholder-[#707070]"
-            />
-            <button
-              onClick={handleSave}
-              className="bg-[#0e639c] hover:bg-[#1177bb] text-white px-4 py-2 rounded text-xs transition-colors"
-            >
-              追加
-            </button>
-          </div>
-
-          {/* 封印リスト */}
-          <div>
-            <h3 className="text-[11px] font-bold text-[#858585] uppercase mb-3 tracking-widest">封印中のサイト</h3>
-            <div className="space-y-1 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
-              {urls.length === 0 ? (
-                <p className="text-[11px] text-[#707070] italic">リストは空です</p>
-              ) : (
-                urls.map((url) => (
-                  <div key={url} className="flex justify-between items-center bg-[#2d2d2d] p-2 rounded border border-[#333333] group hover:bg-[#37373d] transition-colors">
-                    <span className="text-xs font-mono text-[#dcdcaa] truncate mr-2">{url}</span>
-                    <button
-                      onClick={() => handleDelete(url)}
-                      className="text-[#858585] hover:text-[#f48771] text-[10px] font-bold px-1 transition-colors"
-                    >
-                      削除
-                    </button>
-                  </div>
-                ))
-              )}
+        {/* タブコンテンツ */}
+        <div className="p-6">
+          {activeTab === 'stats' && (
+            <div className="space-y-6 text-center py-4">
+              <h2 className="text-xs text-[#858585] uppercase tracking-widest mb-2">Today's Focus Time</h2>
+              <div className="font-mono font-bold tracking-tight">
+                {formatTime(todayStats.focusMinutes)}
+              </div>
+              <p className="text-[#858585] text-xs mt-4">
+                ※ VSCodeを起動し、コードを書いた時間
+              </p>
             </div>
-          </div>
+          )}
+
+          {activeTab === 'settings' && (
+            <div className="space-y-6">
+              <button
+                onClick={handlePingRust}
+                className="w-full bg-[#0e639c] hover:bg-[#1177bb] text-white py-2 px-4 rounded text-xs font-medium transition-colors shadow-sm"
+              >
+                Rust 接続テストを実行
+              </button>
+
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={inputUrl}
+                  onChange={(e) => setInputUrl(e.target.value)}
+                  placeholder="例: youtube.com/shorts"
+                  className="flex-1 bg-[#3c3c3c] border border-[#333333] text-[#cccccc] px-3 py-2 rounded text-xs focus:outline-none focus:border-[#007acc] placeholder-[#707070]"
+                />
+                <button
+                  onClick={handleSave}
+                  className="bg-[#0e639c] hover:bg-[#1177bb] text-white px-4 py-2 rounded text-xs transition-colors"
+                >
+                  追加
+                </button>
+              </div>
+
+              <div>
+                <h3 className="text-[11px] font-bold text-[#858585] uppercase mb-3 tracking-widest">封印中のサイト</h3>
+                <div className="space-y-1 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
+                  {urls.length === 0 ? (
+                    <p className="text-[11px] text-[#707070] italic">リストは空です</p>
+                  ) : (
+                    urls.map((url) => (
+                      <div key={url} className="flex justify-between items-center bg-[#2d2d2d] p-2 rounded border border-[#333333] group hover:bg-[#37373d] transition-colors">
+                        <span className="text-xs font-mono text-[#dcdcaa] truncate mr-2">{url}</span>
+                        <button
+                          onClick={() => handleDelete(url)}
+                          className="text-[#858585] hover:text-[#f48771] text-[10px] font-bold px-2 transition-colors"
+                        >
+                          削除
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
