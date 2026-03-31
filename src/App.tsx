@@ -5,6 +5,7 @@ function App() {
   const [urls, setUrls] = useState<string[]>([])
   const [inputUrl, setInputUrl] = useState('')
   const [todayStats, setTodayStats] = useState({ focusMinutes: 0 })
+  const [status, setStatus] = useState<'loading' | 'active' | 'error'>('loading')
 
   const today = new Date().toLocaleDateString('sv-SE');
 
@@ -21,6 +22,16 @@ function App() {
       
       if (log[today]) {
         setTodayStats(log[today]);
+      }
+    });
+
+    // Rustプロセスの生存確認
+    const hostName = "com.site_limiter.vsc_watcher";
+    chrome.runtime.sendNativeMessage(hostName, { text: "ping" }, (response) => {
+      if (chrome.runtime.lastError || !response) {
+        setStatus('error');
+      } else {
+        setStatus('active');
       }
     });
   }, [today]);
@@ -86,8 +97,10 @@ function App() {
       (response) => {
         if (chrome.runtime.lastError) {
           alert("通信失敗: " + chrome.runtime.lastError.message);
+          setStatus('error');
         } else {
           alert("開通成功!\n" + JSON.stringify(response, null, 2));
+          setStatus('active');
         }
       }
     );
@@ -102,8 +115,13 @@ function App() {
           <h1 className="text-xl font-bold text-[#e1e1e1] flex items-center gap-2">
             Site Limiter
           </h1>
-          <span className="text-[10px] text-[#858585] uppercase tracking-widest bg-[#1e1e1e] px-2 py-1 rounded border border-[#333333]">
-            Active
+          {/* ステータスバッジ */}
+          <span className={`text-[10px] uppercase tracking-widest px-2 py-1 rounded border transition-colors ${
+            status === 'active' ? 'text-green-400 border-green-900 bg-green-900/20' : 
+            status === 'error' ? 'text-red-400 border-red-900 bg-red-900/20' : 
+            'text-yellow-400 border-yellow-900 bg-yellow-900/20'
+          }`}>
+            {status === 'active' ? 'Active' : status === 'error' ? 'Inactive' : 'Checking...'}
           </span>
         </div>
 
